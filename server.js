@@ -11,79 +11,85 @@ app.use(bodyParser.urlencoded({ extended: false }));
 const port = process.env.PORT || 3000;
 app.set('port', port);
 
+    
+const jsondata = {
+    "data":[
+        {
+        "id": "1",
+        "destination" : "SG Farm",
+        "municipality"  :"Gensan",
+        "month":"January",
+        "provinceMale":"2",
+        "provinceFemale":"4",
+        "otherProvinceMale":"3",
+        "otherProvinceFemale":"5",
+        "countAgeA":"2","countAgeB":"3",
+        "countAgeC":"6","countAgeD":"8",
+        "residence":[{"id":"1","country":"Ph","male":"2","female":"5","daytime_id":"1"}] 
+        },{
+        "id": "2",
+        "destination" : "london beach",
+        "municipality"  :"Gensan",
+        "month":"January",
+        "provinceMale":"3",
+        "provinceFemale":"6",
+        "otherProvinceMale":"9",
+        "otherProvinceFemale":"12",
+        "countAgeA":"1","countAgeB":"2",
+        "countAgeC":"5","countAgeD":"7",
+        "residence":[{"id":"1","country":"rh","male":"3","female":"6","daytime_id":"1"}]
+        }
+    
+    ]
+        
+};
+
 app.get("/report", (req, res) => {
 
     res.setHeader('Content-type', 'application/vnd.ms-excell');
     res.setHeader('Content-Transfer-Encoding', 'binary');
     res.setHeader('Content-disposition', 'attachment; filename="report.xlsx"');
 
+
+    const fileName = 'templates/DAYTIME_TOURISTS.xlsx';
     let workbook = new excel.Workbook();
 
-    let worksheet = workbook.addWorksheet("Sheet 1");
+    workbook.xlsx.readFile(fileName).then(() => {
 
-    worksheet.columns = [
-        { header: "Name of Attraction / Destination", key: "name", width: 20 },
-        { header: "Municipality", key: "municipality", width: 20 },
-        { header: "Attraction Code", key: "code", width: 20 },
-        { header: "Male", key: "province_male", width: 10 },
-        { header: "Female", key: "province_female", width: 10 },
-        { header: "Total", key: "province_total", width: 10 },
-        { header: "Male", key: "other_male", width: 10 },
-        { header: "Female", key: "other_female", width: 10 },
-        { header: "Total", key: "other_total", width: 10 },
-        { header: "Male", key: "foreign_male", width: 10 },
-        { header: "Female", key: "foreign_female", width: 10 },
-        { header: "Total", key: "foreign_total", width: 10 },
-        { header: "Male", key: "total_male", width: 10 },
-        { header: "Female", key: "total_female", width: 10 },
-        { header: "Total", key: "total_total", width: 10 },
-        { header: "A", key: "age_a", width: 10 },
-        { header: "B", key: "age_b", width: 10 },
-        { header: "C", key: "age_c", width: 10 },
-        { header: "D", key: "age_d", width: 10 },
-        { header: "Please specify Country of Residence of Foreign Visitor", key: "residence", width: 30 },
-    ];
+        let rowid =12;
+        let worksheet = workbook.getWorksheet(1);
+        let headerplacetext=jsondata.data[0].municipality.toString(); 
+        let headermonthtext=jsondata.data[0].month.toString(); 
+        let headerplace = worksheet.getRow(5);
+        let headermonth = worksheet.getRow(6);
+        headerplace.getCell(10).value=headermonthtext;
+        headermonth.getCell(10).value=headerplacetext;
 
-    worksheet.addRow({
-        name: "Amandari Cove Resort",
-        municipality: "GSC",
-        code: "",
-        province_male: 1,
-        province_female: 2,
-        province_total: 3,
-        other_male: 5,
-        other_female: 2,
-        other_total: 7,
-        foreign_male: 2,
-        foreign_female: 1,
-        foreign_total: 3,
-        total_male: 7,
-        total_female: 6,
-        total_total: 13,
-        age_a: 1,
-        age_b: 2,
-        age_c: 3,
-        age_d: 4,
-        residence: ""
-    });
-
-    workbook.xlsx.write(unstream({}, function(buf) {
-        res.status(200).send(buf);
-    })).catch(err => {
+        for(let i =0;i < jsondata.data.length; i++){
+            let row = worksheet.getRow(rowid+i);
+            row.getCell(2).value = jsondata.data[i].destination.toString(); 
+            row.getCell(3).value = jsondata.data[i].municipality.toString(); 
+            row.getCell(5).value = parseInt( jsondata.data[i].provinceMale.toString()); 
+            row.getCell(6).value = parseInt( jsondata.data[i].provinceFemale.toString()); 
+            row.getCell(8).value = parseInt( jsondata.data[i].otherProvinceMale.toString());
+            row.getCell(9).value = parseInt( jsondata.data[i].otherProvinceFemale.toString());
+            row.getCell(18).value = parseInt( jsondata.data[i].countAgeA.toString());
+            row.getCell(19).value = parseInt( jsondata.data[i].countAgeB.toString());
+            row.getCell(20).value = parseInt( jsondata.data[i].countAgeC.toString());
+            row.getCell(21).value = parseInt( jsondata.data[i].countAgeD.toString());
+            let resData=jsondata.data[i].residence[0].country.toString() + ' male: '+ jsondata.data[i].residence[0].male.toString() + ' female: '+jsondata.data[i].residence[0].female.toString();
+            row.getCell(22).value =resData;
+        }
+        
+        workbook.xlsx.write(unstream({}, function (buf) {
+            res.status(200).send(buf);
+        })).catch(err => {
+            console.error(err);
+        });
+    })
+    .catch((err) => {
         console.error(err);
     });
-
-    /* const fileName = 'templates/DAYTIME_TOURISTS.xlsx';
-
-    workbook.xlsx.readFile(fileName)
-        .then(() => {
-            let worksheet = workbook.getWorksheet("SAME DAY");
-
-            
-
-        }).catch(err => {
-            console.log(err);
-        }); */
 });
 
 http.listen(port, () => {
