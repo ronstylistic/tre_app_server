@@ -44,6 +44,10 @@ const jsondata = {
         
 };
 
+app.get("/", (req, res) => {
+    res.status(201).send({access: false});
+})
+
 app.get("/report", (req, res) => {
 
     res.setHeader('Content-type', 'application/vnd.ms-excell');
